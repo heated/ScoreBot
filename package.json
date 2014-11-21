@@ -1,0 +1,27 @@
+{
+  "name": "node-js-score-keeping-irc-bot",
+  "version": "0.1.0",
+  "description": "A barebones Node.js score-keeping irc bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "irc": "*",
+    "lodash": "*",
+    "redis": "*",
+    "hiredis": "*"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroku/node-js-getting-started"
+  },
+  "keywords": [
+    "node",
+    "bot"
+  ],
+  "license": "MIT"
+}

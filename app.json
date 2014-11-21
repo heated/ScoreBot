@@ -1,0 +1,7 @@
+{
+  "name": "ScoreBot",
+  "description": "A barebones Node.js score-keeping irc bot",
+  "repository": "https://github.com/heated/ScoreBot",
+  "logo": "http://node-js-sample.herokuapp.com/node.svg",
+  "keywords": ["node", "bot", "redis"]
+}
