@@ -37,11 +37,14 @@ ScoreBot.prototype = {
 		if (from.match(/bot/i)) {
 			return;
 
-		} else if (text.match(/^(man )?scorebot|scorebot help$/i)) {
+		} else if (text.match(/^man scorebot|scorebot help$/i)) {
 			this.say('I am a score-keeping bot for ++s! You can view my source at https://github.com/heated/ScoreBot');
 
 		} else if (text.match(/(\w+)\+\+/)) {
-			this.incScore( text.match(/(\w+)\+\+/)[1] );
+			var name = text.match(/(\w+)\+\+/)[1].toLowerCase();
+			if (name !== from.replace(/\d+/g, '').toLowerCase()) {
+				this.incScore(name);
+			}
 
 		} else if (text.match(/^scores|score list/i)) {
 			this.listScores();
@@ -49,7 +52,7 @@ ScoreBot.prototype = {
 	},
 
 	incScore: function (name) {
-		redisClient.zincrby('scores', 1, name.toLowerCase(), redis.print);
+		redisClient.zincrby('scores', 1, name, redis.print);
 	},
 
 	listScores: function () {
