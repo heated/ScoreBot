@@ -4,8 +4,8 @@ var _ = require('lodash'),
 	url = require('url'),
 
 	config = {
-		channels: ['#appacademy'],
-		server: 'irc.foonetic.net',
+		channels: [process.env.IRC_CHANNEL],
+		server: process.env.IRC_SERVER,
 		botName: 'ScoreBot'
 	};
 
