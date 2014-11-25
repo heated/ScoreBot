@@ -4,8 +4,8 @@ var _ = require('lodash'),
 	url = require('url'),
 
 	config = {
-		channels: [process.env.IRC_CHANNEL],
-		server: process.env.IRC_SERVER,
+		channels: ['#appacademy'],
+		server: 'irc.foonetic.net',
 		botName: 'ScoreBot'
 	};
 
@@ -40,19 +40,41 @@ ScoreBot.prototype = {
 		} else if (text.match(/^man scorebot|scorebot help$/i)) {
 			this.say('I am a score-keeping bot for ++s! You can view my source at https://github.com/heated/ScoreBot');
 
-		} else if (text.match(/(\w+)\+\+/)) {
-			var name = text.match(/(\w+)\+\+/)[1].toLowerCase();
-			if (name !== from.replace(/\d+/g, '').toLowerCase()) {
+		} else if (text.match(/\w+ ?\+\+/)) {
+			var match = text.match(/(\w+) ?\+\+/)[1];
+			var name = this.standardizeName(match);
+
+			// check to make sure the name is valid
+			// for example, the name should be one of the people in the channel
+
+			if (name !== this.standardizeName(from)) {
 				this.incScore(name);
 			}
 
 		} else if (text.match(/^scores|score list/i)) {
 			this.listScores();
+		
+		} else if (text.match(/^\w+('?s)? score|score \w+/i)) {
+			var match = text.match(/^(\w+)('?s)? score|score (\w+)/i)[1];
+			var name = this.standardizeName(match);
+			this.sayScore(name);
 		}
+	},
+
+	standardizeName: function(name) {
+		return name.replace(/\d+/g, '').toLowerCase();
 	},
 
 	incScore: function (name) {
 		redisClient.zincrby('scores', 1, name, redis.print);
+	},
+
+	sayScore: function (name) {
+		redisClient.zscore('scores', name, this.outputScore.bind(this, name));
+	},
+
+	outputScore: function (name, error, points) {
+		this.say(name + ' has ' + points + ' bumbums');
 	},
 
 	listScores: function () {
@@ -60,14 +82,14 @@ ScoreBot.prototype = {
 	},
 
 	outputScores: function (error, scores) {
-		this.say('Top 5 ++ scores:');
+		this.say('Top 5 bumbums:');
 
 		_(scores)
 			.groupBy(function (element, index) {
 				return Math.floor(index / 2);
 			})
 			.each(function (entry) {
-				this.say(entry.join(': '));
+				this.say(entry.join(': ') + ' bumbums');
 			}, this);
 	}
 }
