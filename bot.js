@@ -74,6 +74,10 @@ ScoreBot.prototype = {
 	},
 
 	outputScore: function (name, error, points) {
+		if (points === null) {
+			points = 'no';
+		}
+		
 		this.say(name + ' has ' + points + ' bumbums');
 	},
 
