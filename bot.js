@@ -24,6 +24,8 @@ function ScoreBot() {
 	});
 
 	this.bot.addListener('message', this.respond.bind(this));
+  this.bot.addListener('names', this.recordNicks.bind(this));
+  this.bot.addListener('join', this.recordNewPerson.bind(this));
 }
 
 ScoreBot.prototype = {
@@ -44,16 +46,13 @@ ScoreBot.prototype = {
 			var match = text.match(/(\w+) ?\+\+/)[1];
 			var name = this.standardizeName(match);
 
-			// check to make sure the name is valid
-			// for example, the name should be one of the people in the channel
-
-			if (name !== this.standardizeName(from)) {
-				this.incScore(name);
-			}
+      if (name !== this.standardizeName(from)) {
+        this.ifOneOfUs(name, this.incScore.bind(this, name))
+      }
 
 		} else if (text.match(/^scores|score list/i)) {
 			this.listScores();
-		
+
 		} else if (text.match(/^\w+('?s)? score|score \w+/i)) {
 			var match = text.match(/^(\w+)('?s)? score|score (\w+)/i)[1];
 			var name = this.standardizeName(match);
@@ -77,7 +76,7 @@ ScoreBot.prototype = {
 		if (points === null) {
 			points = 'no';
 		}
-		
+
 		this.say(name + ' has ' + points + ' bumbums');
 	},
 
@@ -95,7 +94,24 @@ ScoreBot.prototype = {
 			.each(function (entry) {
 				this.say(entry.join(': ') + ' bumbums');
 			}, this);
-	}
+	},
+
+  recordNicks: function (channel, nicks) {
+    var standard_nicks = Object.keys(nicks).map(this.standardizeName.bind(this));
+    redisClient.sadd("nick_names", standard_nicks);
+  },
+
+  recordNewPerson: function(channel, nick, message) {
+    redisClient.sadd("nick_names", nick);
+  },
+
+  ifOneOfUs: function(name, ifCallback) {
+    redisClient.sismember("nick_names", name, function(error, isANameOnChannel) {
+      if (isANameOnChannel) {
+        ifCallback();
+      }
+    })
+  }
 }
 
 scoreBot = new ScoreBot();
