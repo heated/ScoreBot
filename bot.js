@@ -26,6 +26,7 @@ function ScoreBot() {
 	this.bot.addListener('message', this.respond.bind(this));
   this.bot.addListener('names', this.recordNicks.bind(this));
   this.bot.addListener('join', this.recordNewPerson.bind(this));
+  this.bot.addListener('message', this.saysSomethingAboutSomeone.bind(this));
 }
 
 ScoreBot.prototype = {
@@ -57,7 +58,11 @@ ScoreBot.prototype = {
 			var match = text.match(/^(\w+)('?s)? score|score (\w+)/i)[1];
 			var name = this.standardizeName(match);
 			this.sayScore(name);
-		}
+		} else if (text.match(/who is/)) {
+      var match = text.match(/who is (\w+)/i)[1];
+      var name = this.standardizeName(match);
+      this.sayWhoIs(name);
+    }
 	},
 
 	standardizeName: function(name) {
@@ -105,9 +110,37 @@ ScoreBot.prototype = {
     redisClient.sadd("nick_names", nick);
   },
 
+  saysSomethingAboutSomeone: function(from, to, text, message) {
+    if (text.match(/\w+ is /)) {
+      var nameAndDescription = text.match(/(\w+) is (.+)/);
+      var name = this.standardizeName(nameAndDescription[1]);
+      this.ifOneOfUs(name, function() {
+        redisClient.sadd("whois" + name, nameAndDescription[2]);
+      })
+    }
+  },
+
+  sayWhoIs: function(nick) {
+    var msg = nick + " is ";
+    var that = this;
+    this.ifThereIsSomethingToSay(nick, function() {
+      redisClient.smembers("whois" + nick, function(error, descriptions) {
+        that.say(msg + descriptions.join(', ') + ".");
+      })
+    })
+  },
+
   ifOneOfUs: function(name, ifCallback) {
     redisClient.sismember("nick_names", name, function(error, isANameOnChannel) {
       if (isANameOnChannel) {
+        ifCallback();
+      }
+    })
+  },
+
+  ifThereIsSomethingToSay: function(name, ifCallback) {
+    redisClient.scard("whois" + name, function(error, numberOfDescriptors) {
+      if (numberOfDescriptors > 0) {
         ifCallback();
       }
     })
