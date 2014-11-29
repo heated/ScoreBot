@@ -54,8 +54,8 @@ ScoreBot.prototype = {
 		} else if (text.match(/^scores|score list/i)) {
 			this.listScores();
 		
-		} else if (text.match(/^\w+('?s)? score|score \w+/i)) {
-			var match = text.match(/^(\w+)('?s)? score|score (\w+)/i)[1];
+		} else if (text.match(/^\w+('s)? score/i)) {
+			var match = text.match(/^(\w+)('s)? score/i)[1];
 			var name = this.standardizeName(match);
 			this.sayScore(name);
 		}
@@ -77,7 +77,7 @@ ScoreBot.prototype = {
 		if (points === null) {
 			points = 'no';
 		}
-		
+
 		this.say(name + ' has ' + points + ' bumbums');
 	},
 
