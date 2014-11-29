@@ -10,12 +10,12 @@ var _ = require('lodash'),
 	};
 
 if (process.env.REDISTOGO_URL) {
-    var rtg = url.parse(process.env.REDISTOGO_URL);
+		var rtg = url.parse(process.env.REDISTOGO_URL);
 	var redisClient = redis.createClient(rtg.port, rtg.hostname);
 
 	redisClient.auth(rtg.auth.split(':')[1]);
 } else {
-    var redisClient = redis.createClient();
+		var redisClient = redis.createClient();
 }
 
 function ScoreBot() {
@@ -24,13 +24,16 @@ function ScoreBot() {
 	});
 
 	this.bot.addListener('message', this.respond.bind(this));
+	this.bot.addListener('names', this.recordNicks.bind(this));
+	this.bot.addListener('join', this.recordNewPerson.bind(this));
+	this.bot.addListener('message', this.saysSomethingAboutSomeone.bind(this));
 }
 
 ScoreBot.prototype = {
 	responses: [],
 
 	say: function (str) {
-	  this.bot.say(config.channels[0], str);
+		this.bot.say(config.channels[0], str);
 	},
 
 	respond: function (from, to, text, message) {
@@ -44,11 +47,8 @@ ScoreBot.prototype = {
 			var match = text.match(/(\w+) ?\+\+/)[1];
 			var name = this.standardizeName(match);
 
-			// check to make sure the name is valid
-			// for example, the name should be one of the people in the channel
-
 			if (name !== this.standardizeName(from)) {
-				this.incScore(name);
+				this.ifOneOfUs(name, this.incScore.bind(this, name))
 			}
 
 		} else if (text.match(/^scores|score list/i)) {
@@ -58,6 +58,10 @@ ScoreBot.prototype = {
 			var match = text.match(/^(\w+)('s)? score/i)[1];
 			var name = this.standardizeName(match);
 			this.sayScore(name);
+		} else if (text.match(/who is/)) {
+			var match = text.match(/who is (\w+)/i)[1];
+			var name = this.standardizeName(match);
+			this.sayWhoIs(name);
 		}
 	},
 
@@ -95,6 +99,51 @@ ScoreBot.prototype = {
 			.each(function (entry) {
 				this.say(entry.join(': ') + ' bumbums');
 			}, this);
+	},
+
+	recordNicks: function (channel, nicks) {
+		var standard_nicks = Object.keys(nicks).map(this.standardizeName.bind(this));
+		redisClient.sadd("nick_names", standard_nicks);
+	},
+
+	recordNewPerson: function(channel, nick, message) {
+		redisClient.sadd("nick_names", nick);
+	},
+
+	saysSomethingAboutSomeone: function(from, to, text, message) {
+		if (text.match(/\w+ is /)) {
+			var nameAndDescription = text.match(/(\w+) is (.+)/);
+			var name = this.standardizeName(nameAndDescription[1]);
+			this.ifOneOfUs(name, function() {
+				redisClient.sadd("whois" + name, nameAndDescription[2]);
+			})
+		}
+	},
+
+	sayWhoIs: function(nick) {
+		var msg = nick + " is ";
+		var that = this;
+		this.ifThereIsSomethingToSay(nick, function() {
+			redisClient.smembers("whois" + nick, function(error, descriptions) {
+				that.say(msg + descriptions.join(', ') + ".");
+			})
+		})
+	},
+
+	ifOneOfUs: function(name, ifCallback) {
+		redisClient.sismember("nick_names", name, function(error, isANameOnChannel) {
+			if (isANameOnChannel) {
+				ifCallback();
+			}
+		})
+	},
+
+	ifThereIsSomethingToSay: function(name, ifCallback) {
+		redisClient.scard("whois" + name, function(error, numberOfDescriptors) {
+			if (numberOfDescriptors > 0) {
+				ifCallback();
+			}
+		})
 	}
 }
 
