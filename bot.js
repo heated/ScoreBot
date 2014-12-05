@@ -43,8 +43,8 @@ ScoreBot.prototype = {
 		} else if (text.match(/^man scorebot|scorebot help$/i)) {
 			this.say('I am a score-keeping bot for ++s! You can view my source at https://github.com/heated/ScoreBot');
 
-		} else if (text.match(/\w+ ?\+\+/)) {
-			var match = text.match(/(\w+) ?\+\+/)[1];
+		} else if (text.match(/\w+\+\+/)) {
+			var match = text.match(/(\w+)\+\+/)[1];
 			var name = this.standardizeName(match);
 
 			if (name !== this.standardizeName(from)) {
@@ -66,7 +66,7 @@ ScoreBot.prototype = {
 	},
 
 	standardizeName: function(name) {
-		return name.replace(/\d+/g, '').toLowerCase();
+		return name.replace(/[\d_]+$/, '').toLowerCase();
 	},
 
 	incScore: function (name) {
@@ -103,11 +103,11 @@ ScoreBot.prototype = {
 
 	recordNicks: function (channel, nicks) {
 		var standard_nicks = Object.keys(nicks).map(this.standardizeName.bind(this));
-		redisClient.sadd("nick_names", standard_nicks);
+		redisClient.sadd('nick_names', standard_nicks);
 	},
 
 	recordNewPerson: function(channel, nick, message) {
-		redisClient.sadd("nick_names", nick);
+		redisClient.sadd('nick_names', nick);
 	},
 
 	saysSomethingAboutSomeone: function(from, to, text, message) {
@@ -115,23 +115,23 @@ ScoreBot.prototype = {
 			var nameAndDescription = text.match(/(\w+) is (.+)/);
 			var name = this.standardizeName(nameAndDescription[1]);
 			this.ifOneOfUs(name, function() {
-				redisClient.sadd("whois" + name, nameAndDescription[2]);
+				redisClient.sadd('whois' + name, nameAndDescription[2]);
 			})
 		}
 	},
 
 	sayWhoIs: function(nick) {
-		var msg = nick + " is ";
+		var msg = nick + ' is ';
 		var that = this;
 		this.ifThereIsSomethingToSay(nick, function() {
-			redisClient.smembers("whois" + nick, function(error, descriptions) {
-				that.say(msg + descriptions.join(', ') + ".");
+			redisClient.smembers('whois' + nick, function(error, descriptions) {
+				that.say(msg + descriptions.join(', ') + '.');
 			})
 		})
 	},
 
 	ifOneOfUs: function(name, ifCallback) {
-		redisClient.sismember("nick_names", name, function(error, isANameOnChannel) {
+		redisClient.sismember('nick_names', name, function(error, isANameOnChannel) {
 			if (isANameOnChannel) {
 				ifCallback();
 			}
@@ -139,7 +139,7 @@ ScoreBot.prototype = {
 	},
 
 	ifThereIsSomethingToSay: function(name, ifCallback) {
-		redisClient.scard("whois" + name, function(error, numberOfDescriptors) {
+		redisClient.scard('whois' + name, function(error, numberOfDescriptors) {
 			if (numberOfDescriptors > 0) {
 				ifCallback();
 			}
