@@ -84,6 +84,10 @@ ScoreBot.prototype = {
 			points = (1 / points).toFixed(2);
 		}
 
+		if (points === '0.00') {
+			points = 'no';
+		}
+
 		this.say(name + ' has ' + points + ' bumbum' + (points === '1.00' ? '' : 's'));
 	},
 
