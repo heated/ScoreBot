@@ -79,10 +79,12 @@ ScoreBot.prototype = {
 
 	outputScore: function (name, error, points) {
 		if (points === null) {
-			points = 'no';
+			points = '∞';
+		} else {
+			points = (1 / points).toFixed(2);
 		}
 
-		this.say(name + ' has ' + points + ' bumbums');
+		this.say(name + ' has ' + points + ' bumbum' + (points === '1.00' ? '' : 's'));
 	},
 
 	listScores: function () {
@@ -90,14 +92,14 @@ ScoreBot.prototype = {
 	},
 
 	outputScores: function (error, scores) {
-		this.say('Top 5 bumbums:');
+		this.say('Lowest five bumbums:');
 
 		_(scores)
 			.groupBy(function (element, index) {
 				return Math.floor(index / 2);
 			})
 			.each(function (entry) {
-				this.say(entry.join(': ') + ' bumbums');
+				this.outputScore(entry[0], null, entry[1]);
 			}, this);
 	},
 
@@ -106,40 +108,40 @@ ScoreBot.prototype = {
 		redisClient.sadd('nick_names', standard_nicks);
 	},
 
-	recordNewPerson: function(channel, nick, message) {
+	recordNewPerson: function (channel, nick, message) {
 		redisClient.sadd('nick_names', nick);
 	},
 
-	saysSomethingAboutSomeone: function(from, to, text, message) {
-		if (text.match(/\w+ is /)) {
+	saysSomethingAboutSomeone: function (from, to, text, message) {
+		if (text.match(/\w+ is .+/)) {
 			var nameAndDescription = text.match(/(\w+) is (.+)/);
 			var name = this.standardizeName(nameAndDescription[1]);
-			this.ifOneOfUs(name, function() {
+			this.ifOneOfUs(name, function () {
 				redisClient.sadd('whois' + name, nameAndDescription[2]);
 			})
 		}
 	},
 
-	sayWhoIs: function(nick) {
+	sayWhoIs: function (nick) {
 		var msg = nick + ' is ';
 		var that = this;
-		this.ifThereIsSomethingToSay(nick, function() {
-			redisClient.smembers('whois' + nick, function(error, descriptions) {
+		this.ifThereIsSomethingToSay(nick, function () {
+			redisClient.smembers('whois' + nick, function (error, descriptions) {
 				that.say(msg + descriptions.join(', ') + '.');
 			})
 		})
 	},
 
-	ifOneOfUs: function(name, ifCallback) {
-		redisClient.sismember('nick_names', name, function(error, isANameOnChannel) {
+	ifOneOfUs: function (name, ifCallback) {
+		redisClient.sismember('nick_names', name, function (error, isANameOnChannel) {
 			if (isANameOnChannel) {
 				ifCallback();
 			}
 		})
 	},
 
-	ifThereIsSomethingToSay: function(name, ifCallback) {
-		redisClient.scard('whois' + name, function(error, numberOfDescriptors) {
+	ifThereIsSomethingToSay: function (name, ifCallback) {
+		redisClient.scard('whois' + name, function (error, numberOfDescriptors) {
 			if (numberOfDescriptors > 0) {
 				ifCallback();
 			}
