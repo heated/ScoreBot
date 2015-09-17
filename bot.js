@@ -81,14 +81,14 @@ ScoreBot.prototype = {
 		if (points === null) {
 			points = '∞';
 		} else {
-			points = (1 / points).toFixed(2);
+			points = (1 / points).toFixed(3);
 		}
 
-		if (points === '0.00') {
+		if (points === '0.000') {
 			points = 'no';
 		}
 
-		this.say(name + ' has ' + points + ' bumbum' + (points === '1.00' ? '' : 's'));
+		this.say(name + ' has ' + points + ' bumbum' + (points === '1.000' ? '' : 's'));
 	},
 
 	listScores: function () {
