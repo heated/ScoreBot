@@ -97,14 +97,12 @@ ScoreBot.prototype = {
 
 	outputScores: function (error, scores) {
 		this.say('Lowest five bumbums:');
-
-		_(scores)
-			.groupBy(function (element, index) {
-				return Math.floor(index / 2);
-			})
-			.each(function (entry) {
-				this.outputScore(entry[0], null, entry[1]);
-			}, this);
+		var grouped = _.groupBy(scores, function (element, index) {
+		  return Math.floor(index / 2);
+		})
+		_.each(grouped, function (entry) {
+		  this.outputScore(entry[0], null, entry[1]);
+		}, this);
 	},
 
 	recordNicks: function (channel, nicks) {
