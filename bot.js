@@ -58,7 +58,7 @@ ScoreBot.prototype = {
 			var match = text.match(/^(\w+)('s)? score/i)[1];
 			var name = this.standardizeName(match);
 			this.sayScore(name);
-		} else if (text.match(/who is/)) {
+		} else if (text.match(/who is \w+/i)) {
 			var match = text.match(/who is (\w+)/i)[1];
 			var name = this.standardizeName(match);
 			this.sayWhoIs(name);
