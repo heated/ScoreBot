@@ -10,12 +10,12 @@ var _ = require('lodash'),
 	};
 
 if (process.env.REDISTOGO_URL) {
-		var rtg = url.parse(process.env.REDISTOGO_URL);
+	var rtg = url.parse(process.env.REDISTOGO_URL);
 	var redisClient = redis.createClient(rtg.port, rtg.hostname);
 
 	redisClient.auth(rtg.auth.split(':')[1]);
 } else {
-		var redisClient = redis.createClient();
+	var redisClient = redis.createClient();
 }
 
 function ScoreBot() {
@@ -48,12 +48,12 @@ ScoreBot.prototype = {
 			var name = this.standardizeName(match);
 
 			if (name !== this.standardizeName(from)) {
-				this.ifOneOfUs(name, this.incScore.bind(this, name))
+				this.ifOneOfUs(name, this.incScore.bind(this, name));
 			}
 
 		} else if (text.match(/^scores|score list/i)) {
 			this.listScores();
-		
+
 		} else if (text.match(/^\w+('s)? score/i)) {
 			var match = text.match(/^(\w+)('s)? score/i)[1];
 			var name = this.standardizeName(match);
@@ -71,6 +71,7 @@ ScoreBot.prototype = {
 
 	incScore: function (name) {
 		redisClient.zincrby('scores', 1, name, redis.print);
+    console.log('Deflated ' + name + "'s bumbums.");
 	},
 
 	sayScore: function (name) {
@@ -97,9 +98,11 @@ ScoreBot.prototype = {
 
 	outputScores: function (error, scores) {
 		this.say('Lowest five bumbums:');
+
 		var grouped = _.groupBy(scores, function (element, index) {
 		  return Math.floor(index / 2);
-		})
+		});
+
 		_.each(grouped, function (entry) {
 		  this.outputScore(entry[0], null, entry[1]);
 		}, this);
@@ -115,12 +118,13 @@ ScoreBot.prototype = {
 	},
 
 	saysSomethingAboutSomeone: function (from, to, text, message) {
-		if (text.match(/\w+ is .+/)) {
-			var nameAndDescription = text.match(/(\w+) is (.+)/);
+    var nameAndDescription = text.match(/(\w+) is (.+)/);
+    
+		if (nameAndDescription) {
 			var name = this.standardizeName(nameAndDescription[1]);
 			this.ifOneOfUs(name, function () {
 				redisClient.sadd('whois' + name, nameAndDescription[2]);
-			})
+			});
 		}
 	},
 
