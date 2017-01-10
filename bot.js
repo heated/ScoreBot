@@ -97,15 +97,12 @@ ScoreBot.prototype = {
 	},
 
 	outputScores: function (error, scores) {
+        var that = this;
 		this.say('Lowest five bumbums:');
-
-		var grouped = _.groupBy(scores, function (element, index) {
-		  return Math.floor(index / 2);
+        
+		_.chunk(scores, 2).forEach(function (entry) {
+		    that.outputScore(entry[0], null, entry[1]);
 		});
-
-		_.each(grouped, function (entry) {
-		  this.outputScore(entry[0], null, entry[1]);
-		}, this);
 	},
 
 	recordNicks: function (channel, nicks) {
@@ -134,8 +131,8 @@ ScoreBot.prototype = {
 		this.ifThereIsSomethingToSay(nick, function () {
 			redisClient.smembers('whois' + nick, function (error, descriptions) {
 				that.say(msg + descriptions.join(', ') + '.');
-			})
-		})
+			});
+		});
 	},
 
 	ifOneOfUs: function (name, ifCallback) {
@@ -143,7 +140,7 @@ ScoreBot.prototype = {
 			if (isANameOnChannel) {
 				ifCallback();
 			}
-		})
+		});
 	},
 
 	ifThereIsSomethingToSay: function (name, ifCallback) {
@@ -151,7 +148,7 @@ ScoreBot.prototype = {
 			if (numberOfDescriptors > 0) {
 				ifCallback();
 			}
-		})
+		});
 	}
 }
 
